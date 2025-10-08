@@ -1054,22 +1054,26 @@ impl State {
     }
 }
 
-trait SealedInstance: crate::peripheral::RccPeripheral + crate::peripheral::RemapPeripheral {
-    fn regs() -> crate::pac::usart::Usart;
-    fn state() -> &'static State;
+pub(crate) mod sealed {
+    use super::*;
+    
+    pub trait SealedInstance: crate::peripheral::RccPeripheral + crate::peripheral::RemapPeripheral {
+        fn regs() -> crate::pac::usart::Usart;
+        fn state() -> &'static State;
 
-    // fn buffered_state() -> &'static buffered::State;
+        // fn buffered_state() -> &'static buffered::State;
+    }
 }
 
 #[allow(private_bounds)]
-pub trait Instance: Peripheral<P = Self> + SealedInstance + 'static + Send {
+pub trait Instance: Peripheral<P = Self> + sealed::SealedInstance + 'static + Send {
     /// Interrupt for this instance.
     type Interrupt: interrupt::typelevel::Interrupt;
 }
 
 foreach_peripheral!(
     (usart, $inst:ident) => {
-        impl SealedInstance for peripherals::$inst {
+        impl sealed::SealedInstance for peripherals::$inst {
             fn regs() -> crate::pac::usart::Usart {
                 crate::pac::$inst
             }
